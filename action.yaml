@@ -1,0 +1,62 @@
+name: 'Terraform provider registry'
+description: 'Github action to publish terraform provider into github pages'
+author: 'Dinar Valeev'
+branding:
+  icon: 'command'
+  color: 'blue'
+inputs:
+  token:
+    description: 'Github Token'
+    required: true
+  artifacts_dir:
+    description: "directory which holds provider artifacts, defaults to `dist`"
+  repository:
+    description: "The GitHub repository to store registry metadata, defaults to `<GITHUB_REPOSITORY>`"
+    default: ${{ github.repository }}
+  branch:
+    description: "The branch to publish artifacts, defaults to `gh-pages`"
+    required: false
+  username:
+    description: "The user name used for the commit user"
+    required: false
+    default: ${{ github.actor }}
+  email:
+    description: "The email used for the commit user"
+    required: false
+    default: ${{ github.actor }}@users.noreply.github.com
+  namespace:
+    description: "Terraform provider namespace, defaults to <GITHUB_REPOSITORY_OWNER>"
+    default: ${{ github.repository_owner }}
+  gpg_keyid:
+    description: "Key id used to sign provider"
+    required: true
+  gpg_ascii_armor:
+    description: "Public key ASCII armored"
+    required: true
+  generator_version:
+    description: "Version of terraform metadata generator to use"
+    required: false
+    default: 0.1
+runs:
+  using: 'composite'
+  steps:
+    - id: prepare
+      shell: bash
+      run: |
+        VERSION=${{ inputs.generator_version }}
+        curl -L https://github.com/AbsaOSS/tf-provider-registry-generator/releases/download/v${VERSION}/tf-provider-registry-generator_${VERSION}_linux_amd64.zip -o tfreg.zip
+        unzip tfreg.zip
+    - id: run
+      shell: bash
+      run: |
+        ./tf-provider-registry-generator
+      env:
+        TOKEN: ${{ inputs.token }}
+        ARTIFACTS_DIR: ${{ inputs.artifacts_dir }}
+        REPOSITORY: ${{ inputs.repository}}
+        BRANCH: ${{ inputs.branch }}
+        USERNAME: ${{ inputs.username }}
+        EMAIL:  ${{ inputs.commit_email }}
+        NAMESPACE: ${{ inputs.namespace }}
+        GPG_KEYID: ${{ inputs.gpg_keyid }}
+        GPG_ASCII_ARMOR: ${{ inputs.gpg_ascii_armor }}
